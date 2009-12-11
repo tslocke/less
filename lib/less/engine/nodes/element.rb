@@ -268,7 +268,7 @@ module Less
           '.' + name
         end
 
-        def inspect
+        def inspect(_=nil)
           ".#{name}()"
         end
 
