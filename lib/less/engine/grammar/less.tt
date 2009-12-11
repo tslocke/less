@@ -128,7 +128,9 @@ module Less
           if File.exist? path
             unless env.root.imported.include?(path)
               env.root.imported << path
-              env.rules += Less::Engine.new(File.new(path)).to_tree.rules
+              new_env = Less::Engine.new(File.new(path)).to_tree
+              new_env.parent_env = env
+              env.rules += new_env.rules
             end
           else
             raise ImportError, path

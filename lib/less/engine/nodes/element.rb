@@ -13,7 +13,8 @@ module Less
       include Entity
 
       attr_accessor :rules, :selector, :file,
-                    :set,   :imported, :name
+                    :set,   :imported, :name,
+                    :parent_env
 
       def initialize name = "", selector = ''
         @name = name
@@ -172,11 +173,26 @@ module Less
       # Find the nearest node in the hierarchy or raise a NameError
       #
       def nearest ident, type = nil
-        ary = type || ident =~ /^[.#]/ ? :elements : :variables
-        path.map do |node|
-          node.send(ary).find {|i| i.to_s == ident }
-        end.compact.first.tap do |result|
+        find_nearest(ident, type).tap do |result|
           raise VariableNameError, ("#{ident} in #{self.to_s}") if result.nil? && type != :mixin
+        end
+      end
+
+      #
+      # Find the nearest node in the hierarchy or return nil
+      #      
+      def find_nearest ident, type = nil
+        ary = ident =~ /^[.#]/ ? :elements : :variables        
+        found = nil
+        path.each do |node|
+          found = node.send(ary).find {|i| i.to_s == ident }
+          break if found
+        end
+        
+        if found.nil? && ary == :variables && (parent_env = path.last.parent_env)
+          parent_env.find_nearest(ident, :variables)
+        else
+          found
         end
       end
 
